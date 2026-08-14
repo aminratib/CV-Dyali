@@ -5,13 +5,14 @@ import path from 'node:path'
 
 import siteConfiguration from './.figma/make/site.json'
 
+
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
   const emitSourcemaps = mode === 'development'
 
   return {
-    base: process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/',
+    base: '/CV-Dyali/', 
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
@@ -295,6 +296,8 @@ function figmaReactRefreshBoundaryFallback(): Plugin {
   }
 }
 
+
+
 /**
  * Serves a blank render-target page at /.figma/make/kit.html that
  * the Figma preview script drives directly. The page exposes a
@@ -354,3 +357,5 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
     },
   }
 }
+
+
