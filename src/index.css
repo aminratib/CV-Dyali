@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Inter', sans-serif;
+  --color-primary: #1a56ff;
+  --color-primary-dark: #0e3acc;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #ffffff;
+  color: #0a0f1e;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(26,86,255,0.2); border-radius: 99px; }
+
+.font-display { font-family: 'Instrument Serif', serif; }
+
+/* Text gradients */
+.text-gradient {
+  background: linear-gradient(135deg, #0a0f1e 0%, #1a56ff 70%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-light {
+  background: linear-gradient(135deg, #ffffff 0%, #bfd4ff 70%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass surfaces */
+.glass-light {
+  background: rgba(255,255,255,0.82);
+  border: 1px solid rgba(26,86,255,0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.glass-dark {
+  background: rgba(4,13,30,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.glass-blue {
+  background: rgba(26,86,255,0.07);
+  border: 1px solid rgba(26,86,255,0.15);
+}
+
+/* Carousel animation */
+@keyframes carouselFade {
+  0%   { opacity: 0; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.carousel-enter { animation: carouselFade 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+/* Shimmer on badge */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.shimmer-text {
+  background: linear-gradient(90deg, #6b9fff 0%, #ffffff 40%, #6b9fff 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Reveal on load */
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal      { animation: revealUp 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+.reveal-d1   { animation-delay: 0.08s; }
+.reveal-d2   { animation-delay: 0.16s; }
+.reveal-d3   { animation-delay: 0.24s; }
+.reveal-d4   { animation-delay: 0.36s; }
+
+/* Mobile menu slide */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.menu-open { animation: slideDown 0.22s ease forwards; }
+
+/* Pulse dot */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+.pulse-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+
+/* Video placeholder pulse */
+@keyframes videoGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(26,86,255,0.3); }
+  50%       { box-shadow: 0 0 0 12px rgba(26,86,255,0); }
+}
+.video-btn { animation: videoGlow 2s ease-in-out infinite; }
+
+/* Smooth modal */
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-enter { animation: modalIn 0.25s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+/* Bottom safe area for mobile */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }

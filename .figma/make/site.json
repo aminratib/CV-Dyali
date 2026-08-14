@@ -1,0 +1,10 @@
+{
+  "description": "Create elegant, responsive CV websites with customizable templates and pricing plans, allowing users to easily order and submit their CVs.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
