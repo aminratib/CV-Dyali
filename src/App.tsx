@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 
+// ─── Paiement Payzone ─────────────────────────────────────────────────────────
+// Aucun backend nécessaire : chaque plan a son propre "lien de paiement" créé
+// depuis le tableau de bord Payzone (montant fixe, aucune intégration technique
+// requise côté Payzone). Le client clique sur "Payer maintenant" et est
+// redirigé directement vers ce lien — voir le champ `paymentLink` dans PLANS
+// plus bas pour remplacer les liens d'exemple par les tiens.
+
 // ─── Page type ────────────────────────────────────────────────────────────────
 type Page = 'home' | { type: 'model'; id: number }
 
@@ -195,6 +202,7 @@ const PLANS = [
     features: ['1 modèle au choix', 'Contenu personnalisé', 'Design responsive', 'Hébergement 1 an', 'Livraison en 5 jours'],
     highlighted: false,
     cta: 'Commencer',
+    paymentLink: 'https://www.paypal.com/ncp/payment/YSG7CA8GYPNFW', // <-- remplace par ton vrai lien Payzone pour ce plan
   },
   {
     name: 'Pro',
@@ -204,6 +212,7 @@ const PLANS = [
     highlighted: true,
     cta: 'Choisir Pro',
     badge: 'Le plus populaire',
+    paymentLink: 'https://www.paypal.com/ncp/payment/VRW54QULM78B8', // <-- remplace par ton vrai lien Payzone pour ce plan
   },
   {
     name: 'Elite',
@@ -212,30 +221,9 @@ const PLANS = [
     features: ['Tout Pro inclus', 'Design sur mesure', 'Intégration portfolio', 'Hébergement à vie', 'Livraison en 48h', 'Révisions illimitées', 'Support prioritaire'],
     highlighted: false,
     cta: 'Aller Elite',
+    paymentLink: 'https://www.paypal.com/ncp/payment/5UA33SVFEZWJS', // <-- remplace par ton vrai lien Payzone pour ce plan
   },
 ]
-
-// ─── WhatsApp message ─────────────────────────────────────────────────────────
-function buildWhatsApp(form: { fullName: string; email: string; phone: string; profession: string; linkedin: string; selectedModel: number | null; selectedPlan: string; notes: string }) {
-  const model = form.selectedModel ? MODELS.find((m) => m.id === form.selectedModel)?.name : ''
-  const price = PLANS.find((p) => p.name === form.selectedPlan)?.price ?? ''
-  const lines = [
-    '✨ *Nouvelle Commande — CV Dyali*',
-    '━━━━━━━━━━━━━━━━━━━━',
-    `👤 *Nom:* ${form.fullName}`,
-    `💼 *Profession:* ${form.profession}`,
-    `📧 *Email:* ${form.email}`,
-    `📱 *Téléphone:* ${form.phone}`,
-    form.linkedin ? `🔗 *LinkedIn:* ${form.linkedin}` : null,
-    '━━━━━━━━━━━━━━━━━━━━',
-    `🎨 *Modèle:* ${model}`,
-    `📦 *Plan:* ${form.selectedPlan} — ${price} MAD`,
-    form.notes ? `📝 *Notes:* ${form.notes}` : null,
-    '━━━━━━━━━━━━━━━━━━━━',
-    '✅ Merci, je vous contacterai très rapidement !',
-  ].filter(Boolean).join('\n')
-  return encodeURIComponent(lines)
-}
 
 // ─── Icon set (clean line icons, no emoji) ────────────────────────────────────
 type IconKey =
@@ -332,17 +320,21 @@ function LightboxImage({ src, alt, accent }: { src: string; alt: string; accent:
 
 // ─── Smart background image (graceful placeholder until you add the file) ────
 // Used for per-model header backgrounds: drop the file at the given path and
-// it appears automatically, with a smooth fade-in and cover treatment. Until
-// then, a soft themed gradient placeholder is shown instead of a broken image.
+// it appears automatically, blurred and softly framed by a white fade at the
+// top and bottom so it blends smoothly into the rest of the (white) page.
+// Until a real file exists, a soft themed gradient placeholder is shown
+// instead of a broken image.
 function SmartBackground({ src, accent, className = '' }: { src: string; accent: string; className?: string }) {
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading')
   return (
     <div className={`absolute inset-0 overflow-hidden ${className}`}>
+      {/* Scaled up so the blur never reveals transparent edges */}
       <img
         src={src}
         alt=""
         aria-hidden="true"
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${status === 'ok' ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 w-full h-full object-cover scale-110 transition-opacity duration-700 ${status === 'ok' ? 'opacity-100' : 'opacity-0'}`}
+        style={{ filter: 'blur(28px)' }}
         onLoad={() => setStatus('ok')}
         onError={() => setStatus('error')}
       />
@@ -352,6 +344,12 @@ function SmartBackground({ src, accent, className = '' }: { src: string; accent:
           style={{ background: `radial-gradient(ellipse at 30% 0%, ${accent}2e, transparent 60%), radial-gradient(ellipse at 80% 100%, ${accent}22, transparent 55%)` }}
         />
       )}
+      {/* Soft white wash so the blurred photo never fights with the text */}
+      <div className="absolute inset-0 bg-white/35" />
+      {/* Smooth white fade at the very top — blends into the navbar area */}
+      <div className="absolute inset-x-0 top-0 h-24 sm:h-32 bg-gradient-to-b from-white via-white/70 to-transparent" />
+      {/* Smooth white fade at the bottom — blends into the page below */}
+      <div className="absolute inset-x-0 bottom-0 h-40 sm:h-56 bg-gradient-to-t from-white via-white/85 to-transparent" />
     </div>
   )
 }
@@ -832,11 +830,10 @@ function ModelDetailPage({ model, onBack, onOrder }: { model: ModelData; onBack:
       {/* Hero */}
       <section className="relative h-[46vh] sm:h-[52vh] overflow-hidden" style={{ backgroundColor: model.bgColor }}>
         <SmartBackground src={model.headerBg} accent={model.accent} />
-        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, ${model.bgColor}33 0%, ${model.bgColor}cc 70%, ${model.bgColor} 100%)` }} />
 
         {/* Back button */}
         <button onClick={onBack} type="button"
-          className="absolute top-20 left-4 sm:left-8 z-20 flex items-center gap-2 glass-dark text-white text-sm font-medium px-4 py-2.5 rounded-full transition-all hover:bg-white/20 active:scale-95 cursor-pointer"
+          className="absolute top-20 left-4 sm:left-8 z-20 flex items-center gap-2 glass-light text-slate-700 text-sm font-medium px-4 py-2.5 rounded-full shadow-sm transition-all hover:bg-white active:scale-95 cursor-pointer"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           Retour
@@ -844,7 +841,7 @@ function ModelDetailPage({ model, onBack, onOrder }: { model: ModelData; onBack:
 
         {/* Voir en ligne */}
         <a href={model.liveUrl} target="_blank" rel="noopener noreferrer"
-          className="absolute top-20 right-4 sm:right-8 z-20 flex items-center gap-2 glass-dark text-white text-sm font-medium px-4 py-2.5 rounded-full transition-all hover:bg-white/20 active:scale-95"
+          className="absolute top-20 right-4 sm:right-8 z-20 flex items-center gap-2 glass-light text-slate-700 text-sm font-medium px-4 py-2.5 rounded-full shadow-sm transition-all hover:bg-white active:scale-95"
         >
           Voir en ligne
           <Icon name="external" size={14} />
@@ -1091,10 +1088,8 @@ function ModelDetailPage({ model, onBack, onOrder }: { model: ModelData; onBack:
 // ─── Order Modal ──────────────────────────────────────────────────────────────
 function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolean; initialModel: number | null; initialPlan: string; onClose: () => void }) {
   const [step, setStep] = useState(1)
-  const [sending, setSending] = useState(false)
-  const [paying, setPaying] = useState(false)
-  const [payError, setPayError] = useState<string | null>(null)
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', profession: '', linkedin: '', selectedModel: initialModel, selectedPlan: initialPlan || 'Pro', notes: '', paymentMethod: 'card' as 'card' | 'whatsapp' })
+  const [redirecting, setRedirecting] = useState(false)
+  const [form, setForm] = useState({ fullName: '', email: '', phone: '', profession: '', linkedin: '', selectedModel: initialModel, selectedPlan: initialPlan || 'Pro', notes: '' })
 
   useEffect(() => {
     if (open) {
@@ -1118,69 +1113,23 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
 
   const valid1 = form.fullName.trim() && form.email.trim() && form.phone.trim() && form.profession.trim()
   const valid2 = form.selectedModel !== null && form.selectedPlan
+  const selectedPlanData = PLANS.find((p) => p.name === form.selectedPlan)
 
-  const handleSend = () => {
-    setSending(true)
+  // ─── Payzone checkout ───────────────────────────────────────────────────────
+  // No backend involved: each plan has its own Payzone "payment link" (a
+  // fixed-amount page created from the Payzone dashboard). Clicking "Payer
+  // maintenant" redirects the browser straight to it — Payzone hosts the
+  // actual card entry, so nothing sensitive ever touches this app.
+  const handlePay = () => {
+    if (!selectedPlanData?.paymentLink) return
+    setRedirecting(true)
     setTimeout(() => {
-      window.open(`https://wa.me/212625185245?text=${buildWhatsApp(form)}`, '_blank')
-      setSending(false)
-      onClose()
-    }, 700)
-  }
-
-  // ─── Payzone checkout (card payment) ───────────────────────────────────────
-  // Calls our own serverless function (netlify/functions/payzone-create-payment)
-  // which holds the merchant credentials server-side and returns a signed
-  // payload. We then auto-submit a hidden form to Payzone's hosted paywall —
-  // this is the exact flow required by Payzone's Payment Page API and it never
-  // exposes the secret key to the browser.
-  const handlePayCard = async () => {
-    setPayError(null)
-    setPaying(true)
-    const planPrice = PLANS.find((p) => p.name === form.selectedPlan)?.price ?? 0
-    const modelName = MODELS.find((m) => m.id === form.selectedModel)?.name ?? ''
-    try {
-      const res = await fetch('/.netlify/functions/payzone-create-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          price: planPrice,
-          description: `CV Dyali — Modèle ${modelName} — Plan ${form.selectedPlan}`,
-          customerName: form.fullName,
-          customerEmail: form.email,
-          customerPhone: form.phone,
-          model: modelName,
-          plan: form.selectedPlan,
-        }),
-      })
-      if (!res.ok) throw new Error('request_failed')
-      const data = await res.json()
-      if (!data?.paywallUrl || !data?.payload || !data?.signature) throw new Error('bad_response')
-
-      // Build and auto-submit the hidden form Payzone requires for redirection
-      const f = document.createElement('form')
-      f.method = 'POST'
-      f.action = data.paywallUrl
-      const addField = (name: string, value: string) => {
-        const input = document.createElement('input')
-        input.type = 'hidden'
-        input.name = name
-        input.value = value
-        f.appendChild(input)
-      }
-      addField('payload', data.payload)
-      addField('signature', data.signature)
-      document.body.appendChild(f)
-      f.submit()
-      // Navigation away happens here — no need to reset `paying`.
-    } catch {
-      setPaying(false)
-      setPayError('Impossible de lancer le paiement pour le moment. Réessayez, ou choisissez WhatsApp ci-dessous.')
-    }
+      window.location.href = selectedPlanData.paymentLink
+    }, 500)
   }
 
   const inputCls = 'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-[#1a56ff] focus:ring-2 focus:ring-[#1a56ff]/12 transition-all'
-  const STEP_LABELS = ['Vos infos', 'Choix', 'Confirmation']
+  const STEP_LABELS = ['Vos infos', 'Choix', 'Paiement']
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -1198,7 +1147,7 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
           <div className="flex items-center justify-between mb-4 sm:mb-5">
             <div>
               <h2 className="font-display text-xl sm:text-2xl text-slate-900">Commander un CV</h2>
-              <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Paiement en ligne ou via WhatsApp</p>
+              <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Paiement sécurisé en ligne par carte</p>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors flex-shrink-0">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 1.5l10 10M11.5 1.5l-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -1326,58 +1275,14 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
                 ))}
               </div>
 
-              {/* Payment method */}
-              <div>
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Mode de paiement</div>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => update('paymentMethod', 'card')}
-                    className={`text-left rounded-2xl border-2 p-4 transition-all ${form.paymentMethod === 'card' ? 'border-[#1a56ff] bg-[#f0f4ff]' : 'border-slate-200 hover:border-slate-300'}`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-[#1a56ff]/10 text-[#1a56ff] flex items-center justify-center mb-2">
-                      <Icon name="lock" size={15} />
-                    </div>
-                    <div className="text-sm font-semibold text-slate-900">Carte bancaire</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Payzone · Visa, Mastercard</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => update('paymentMethod', 'whatsapp')}
-                    className={`text-left rounded-2xl border-2 p-4 transition-all ${form.paymentMethod === 'whatsapp' ? 'border-[#25D366] bg-green-50' : 'border-slate-200 hover:border-slate-300'}`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 text-[#1eab54] flex items-center justify-center mb-2">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-                    </div>
-                    <div className="text-sm font-semibold text-slate-900">WhatsApp</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Devis puis paiement à part</div>
-                  </button>
+              {/* Payment note */}
+              <div className="bg-[#f0f4ff] border border-[#dce7ff] rounded-xl p-4 flex gap-3">
+                <Icon name="lock" size={16} className="flex-shrink-0 mt-0.5 text-[#1a56ff]" />
+                <div>
+                  <p className="text-slate-800 text-xs font-semibold mb-0.5">Paiement 100% sécurisé par Payzone</p>
+                  <p className="text-slate-500 text-xs leading-relaxed">En cliquant sur "Payer maintenant", vous serez redirigé vers la page de paiement sécurisée Payzone pour régler par carte Visa ou Mastercard.</p>
                 </div>
               </div>
-
-              {form.paymentMethod === 'card' ? (
-                <div className="bg-[#f0f4ff] border border-[#dce7ff] rounded-xl p-4 flex gap-3">
-                  <Icon name="lock" size={16} className="flex-shrink-0 mt-0.5 text-[#1a56ff]" />
-                  <div>
-                    <p className="text-slate-800 text-xs font-semibold mb-0.5">Paiement 100% sécurisé</p>
-                    <p className="text-slate-500 text-xs leading-relaxed">Vous serez redirigé vers la page de paiement sécurisée Payzone pour régler par carte Visa ou Mastercard.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex gap-3">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366" className="flex-shrink-0 mt-0.5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-                  <div>
-                    <p className="text-green-800 text-xs font-semibold mb-0.5">Commande via WhatsApp</p>
-                    <p className="text-green-700 text-xs leading-relaxed">Votre résumé sera envoyé directement. Nous vous répondrons dans les 2 heures.</p>
-                  </div>
-                </div>
-              )}
-
-              {payError && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-xs leading-relaxed">
-                  {payError}
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -1398,21 +1303,14 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
                 Continuer
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5h7M5.5 2l3.5 3.5L5.5 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
-            : form.paymentMethod === 'card'
-              ? <button onClick={handlePayCard} disabled={paying}
-                  className="flex items-center gap-2 bg-[#1a56ff] hover:bg-[#0e3acc] disabled:opacity-60 text-white text-sm font-bold px-6 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-blue-500/20"
-                >
-                  {paying
-                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    : <Icon name="lock" size={14} />}
-                  Payer {PLANS.find((p) => p.name === form.selectedPlan)?.price ?? ''} MAD
-                </button>
-              : <button onClick={handleSend} disabled={sending}
-                  className="flex items-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-sm font-bold px-6 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-green-500/20"
-                >
-                  {sending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>}
-                  Envoyer sur WhatsApp
-                </button>
+            : <button onClick={handlePay} disabled={redirecting}
+                className="flex items-center gap-2 bg-[#1a56ff] hover:bg-[#0e3acc] disabled:opacity-60 text-white text-sm font-bold px-6 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+              >
+                {redirecting
+                  ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  : <Icon name="lock" size={14} />}
+                {redirecting ? 'Redirection…' : `Payer ${selectedPlanData?.price ?? ''} MAD`}
+              </button>
           }
         </div>
       </div>
