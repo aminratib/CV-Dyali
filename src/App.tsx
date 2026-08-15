@@ -334,7 +334,7 @@ function SmartBackground({ src, accent, className = '' }: { src: string; accent:
         alt=""
         aria-hidden="true"
         className={`absolute inset-0 w-full h-full object-cover scale-110 transition-opacity duration-700 ${status === 'ok' ? 'opacity-100' : 'opacity-0'}`}
-        style={{ filter: 'blur(28px)' }}
+        style={{ filter: 'blur(12px)' }}
         onLoad={() => setStatus('ok')}
         onError={() => setStatus('error')}
       />
@@ -698,7 +698,7 @@ function PricingSection({ onSelect }: { onSelect: (plan: string) => void }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-5xl mx-auto">
           {PLANS.map((plan) => (
             <div key={plan.name}
-              className={`relative rounded-3xl p-7 flex flex-col transition-all duration-300 hover:-translate-y-1.5 ${plan.highlighted ? 'bg-[#1a56ff] shadow-[0_20px_60px_rgba(26,86,255,0.25)]' : 'bg-[#f7f8fc] border border-slate-100 hover:border-[#dce7ff] hover:shadow-md'}`}
+              className={`relative rounded-3xl p-7 flex flex-col transition-all duration-300 hover:-translate-y-1.5 ${plan.highlighted ? 'bg-[#1a56ff] shadow-[0_20px_60px_rgba(26,86,255,0.25)]' : 'bg-white border-2 border-slate-200 shadow-sm hover:border-[#1a56ff]/40 hover:shadow-md'}`}
             >
               {plan.badge && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-white text-[#1a56ff] text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm">{plan.badge}</div>
@@ -1040,8 +1040,8 @@ function ModelDetailPage({ model, onBack, onOrder }: { model: ModelData; onBack:
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
                 <button onClick={onBack}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm font-medium px-6 py-4 rounded-2xl sm:rounded-full bg-white transition-all"
-                  style={{ color: model.textColor + 'aa' }}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm font-medium px-6 py-4 rounded-2xl sm:rounded-full bg-white border-2 shadow-sm hover:shadow-md transition-all"
+                  style={{ color: model.textColor + 'cc', borderColor: model.accent + '33' }}
                 >
                   Voir d'autres modèles
                 </button>
@@ -1089,6 +1089,7 @@ function ModelDetailPage({ model, onBack, onOrder }: { model: ModelData; onBack:
 function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolean; initialModel: number | null; initialPlan: string; onClose: () => void }) {
   const [step, setStep] = useState(1)
   const [redirecting, setRedirecting] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'whatsapp'>('card')
   const [form, setForm] = useState({ fullName: '', email: '', phone: '', profession: '', linkedin: '', selectedModel: initialModel, selectedPlan: initialPlan || 'Pro', notes: '' })
 
   useEffect(() => {
@@ -1128,6 +1129,27 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
     }, 500)
   }
 
+  // ─── Commande via WhatsApp ───────────────────────────────────────────────────
+  // Alternative au paiement carte : on pré-remplit un message WhatsApp avec le
+  // récapitulatif de la commande, envoyé directement au numéro de contact.
+  const handleWhatsAppOrder = () => {
+    const modelName = form.selectedModel ? MODELS.find((m) => m.id === form.selectedModel)?.name : '—'
+    const lines = [
+      'Bonjour, je souhaite commander un CV website 👋',
+      '',
+      `• Nom : ${form.fullName}`,
+      `• Profession : ${form.profession}`,
+      `• Email : ${form.email}`,
+      `• WhatsApp : ${form.phone}`,
+      form.linkedin ? `• LinkedIn : ${form.linkedin}` : null,
+      `• Modèle : ${modelName}`,
+      `• Plan : ${form.selectedPlan} (${selectedPlanData?.price ?? '—'} MAD)`,
+      form.notes ? `• Notes : ${form.notes}` : null,
+    ].filter(Boolean)
+    const message = encodeURIComponent(lines.join('\n'))
+    window.open(`https://wa.me/212625185245?text=${message}`, '_blank', 'noopener,noreferrer')
+  }
+
   const inputCls = 'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-[#1a56ff] focus:ring-2 focus:ring-[#1a56ff]/12 transition-all'
   const STEP_LABELS = ['Vos infos', 'Choix', 'Paiement']
 
@@ -1147,7 +1169,7 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
           <div className="flex items-center justify-between mb-4 sm:mb-5">
             <div>
               <h2 className="font-display text-xl sm:text-2xl text-slate-900">Commander un CV</h2>
-              <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Paiement sécurisé en ligne par carte</p>
+              <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Par carte bancaire ou via WhatsApp</p>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors flex-shrink-0">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 1.5l10 10M11.5 1.5l-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -1248,6 +1270,27 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
 
           {step === 3 && (
             <div className="space-y-4">
+              {/* Mode de paiement */}
+              <div>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2.5">Mode de paiement *</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button type="button" onClick={() => setPaymentMethod('card')}
+                    className={`flex flex-col items-center gap-1.5 rounded-2xl px-4 py-3.5 border-2 transition-all text-center ${paymentMethod === 'card' ? 'border-[#1a56ff] bg-[#f0f4ff]' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                  >
+                    <Icon name="lock" size={18} className={paymentMethod === 'card' ? 'text-[#1a56ff]' : 'text-slate-400'} />
+                    <span className={`text-sm font-semibold ${paymentMethod === 'card' ? 'text-[#1a56ff]' : 'text-slate-700'}`}>Carte bancaire</span>
+                    <span className="text-[10px] text-slate-400">Visa / Mastercard</span>
+                  </button>
+                  <button type="button" onClick={() => setPaymentMethod('whatsapp')}
+                    className={`flex flex-col items-center gap-1.5 rounded-2xl px-4 py-3.5 border-2 transition-all text-center ${paymentMethod === 'whatsapp' ? 'border-[#25D366] bg-[#eafbf1]' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill={paymentMethod === 'whatsapp' ? '#1eab54' : '#94a3b8'}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                    <span className={`text-sm font-semibold ${paymentMethod === 'whatsapp' ? 'text-[#1eab54]' : 'text-slate-700'}`}>WhatsApp</span>
+                    <span className="text-[10px] text-slate-400">Commander via chat</span>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Notes ou demandes spéciales</label>
                 <textarea
@@ -1276,13 +1319,23 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
               </div>
 
               {/* Payment note */}
-              <div className="bg-[#f0f4ff] border border-[#dce7ff] rounded-xl p-4 flex gap-3">
-                <Icon name="lock" size={16} className="flex-shrink-0 mt-0.5 text-[#1a56ff]" />
-                <div>
-                  <p className="text-slate-800 text-xs font-semibold mb-0.5">Paiement 100% sécurisé par Payzone</p>
-                  <p className="text-slate-500 text-xs leading-relaxed">En cliquant sur "Payer maintenant", vous serez redirigé vers la page de paiement sécurisée Payzone pour régler par carte Visa ou Mastercard.</p>
+              {paymentMethod === 'card' ? (
+                <div className="bg-[#f0f4ff] border border-[#dce7ff] rounded-xl p-4 flex gap-3">
+                  <Icon name="lock" size={16} className="flex-shrink-0 mt-0.5 text-[#1a56ff]" />
+                  <div>
+                    <p className="text-slate-800 text-xs font-semibold mb-0.5">Paiement 100% sécurisé par Paypal</p>
+                    <p className="text-slate-500 text-xs leading-relaxed">En cliquant sur "Payer maintenant", vous serez redirigé vers la page de paiement sécurisée Paypal pour régler par carte Visa ou Mastercard.</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-[#eafbf1] border border-[#c8f0da] rounded-xl p-4 flex gap-3">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#1eab54" className="flex-shrink-0 mt-0.5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                  <div>
+                    <p className="text-slate-800 text-xs font-semibold mb-0.5">Commande via WhatsApp</p>
+                    <p className="text-slate-500 text-xs leading-relaxed">En cliquant sur "Envoyer la commande", WhatsApp s'ouvre avec un message pré-rempli reprenant votre récapitulatif. Il ne vous reste qu'à l'envoyer.</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1303,14 +1356,21 @@ function OrderModal({ open, initialModel, initialPlan, onClose }: { open: boolea
                 Continuer
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5h7M5.5 2l3.5 3.5L5.5 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
-            : <button onClick={handlePay} disabled={redirecting}
-                className="flex items-center gap-2 bg-[#1a56ff] hover:bg-[#0e3acc] disabled:opacity-60 text-white text-sm font-bold px-6 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-blue-500/20"
-              >
-                {redirecting
-                  ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  : <Icon name="lock" size={14} />}
-                {redirecting ? 'Redirection…' : `Payer ${selectedPlanData?.price ?? ''} MAD`}
-              </button>
+            : paymentMethod === 'card'
+              ? <button onClick={handlePay} disabled={redirecting}
+                  className="flex items-center gap-2 bg-[#1a56ff] hover:bg-[#0e3acc] disabled:opacity-60 text-white text-sm font-bold px-6 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+                >
+                  {redirecting
+                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : <Icon name="lock" size={14} />}
+                  {redirecting ? 'Redirection…' : `Payer ${selectedPlanData?.price ?? ''} MAD`}
+                </button>
+              : <button onClick={handleWhatsAppOrder}
+                  className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1eab54] text-white text-sm font-bold px-6 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-green-500/20"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                  Envoyer la commande
+                </button>
           }
         </div>
       </div>
