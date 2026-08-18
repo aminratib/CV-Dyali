@@ -535,9 +535,7 @@ function Hero({ onOrder, onNavigate }: { onOrder: () => void; onNavigate: (p: Pa
           <em className="font-display not-italic text-gradient-light">transformé</em>
           {' '}en site web.
         </h1>
-        <p className="text-white/55 text-base sm:text-lg md:text-xl max-w-lg mx-auto mb-8 sm:mb-10 leading-relaxed font-light reveal reveal-d2">
-          Démarquez-vous avec un CV website unique, élégant et mémorable. Conçu sur mesure, livré en 48h.
-        </p>
+        
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 reveal reveal-d3">
          
           <button
