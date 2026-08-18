@@ -13,10 +13,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: process.env.FIGMA_PUBLIC_URL
-  ? `${process.env.FIGMA_PUBLIC_URL}/`
-  : process.env.GITHUB_ACTIONS
-  ? '/CV-Dyali/'
-  : '/',
+    ? `${process.env.FIGMA_PUBLIC_URL}/`
+    : '/',  
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
