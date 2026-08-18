@@ -10,10 +10,17 @@ import { useState, useEffect, useCallback } from 'react'
 // ─── Page type ────────────────────────────────────────────────────────────────
 type Page = 'home' | { type: 'model'; id: number }
 
+// ─── Asset helper ──────────────────────────────────────────────────────────────
+// Prefixes every static asset path with Vite's BASE_URL so images resolve
+// correctly whether the app is deployed at the domain root or in a
+// sub-path (e.g. GitHub Pages project sites). Always pass a path WITHOUT a
+// leading slash, e.g. asset('logo.svg') or asset('backgrounds/bg1-d.png').
+const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`
+
 // ─── Brand assets ─────────────────────────────────────────────────────────────
 // Drop your logo file at /public/logo.svg (transparent PNG or SVG recommended,
 // ~200×56px works well). It's used in the navbar, the mobile menu and the footer.
-const LOGO_SRC = '/logo.svg'
+const LOGO_SRC = asset('logo.svg')
 
 // ─── Hero background carousel ─────────────────────────────────────────────────
 // Two separate sets so you can art-direct desktop vs. mobile independently
@@ -22,16 +29,16 @@ const LOGO_SRC = '/logo.svg'
 //   /public/backgrounds/desktop-1.jpg … desktop-4.jpg   (1920×1080 or wider, landscape)
 //   /public/backgrounds/mobile-1.jpg  … mobile-4.jpg    (1080×1350 or taller, portrait)
 const CAROUSEL_DESKTOP = [
-  '/backgrounds/bg1-d.png',
-  '/backgrounds/bg2-d.png',
-  '/backgrounds/bg3-d.png',
-  '/backgrounds/bg4-d.png',
+  asset('backgrounds/bg1-d.png'),
+  asset('backgrounds/bg2-d.png'),
+  asset('backgrounds/bg3-d.png'),
+  asset('backgrounds/bg4-d.png'),
 ]
 const CAROUSEL_MOBILE = [
- '/backgrounds/bg1-m.png',
-  '/backgrounds/bg2-m.png',
-  '/backgrounds/bg3-m.png',
-  '/backgrounds/bg4-m.png',
+  asset('backgrounds/bg1-m.png'),
+  asset('backgrounds/bg2-m.png'),
+  asset('backgrounds/bg3-m.png'),
+  asset('backgrounds/bg4-m.png'),
 ]
 
 // ─── Model data ───────────────────────────────────────────────────────────────
@@ -76,11 +83,11 @@ const MODELS: ModelData[] = [
     textColor: '#0a0f1e',
     badgeTextColor: '#ffffff',
     ctaTextColor: '#ffffff',
-    thumb: '/models/bleu-preview.png',
-    heroImg: '/models/bleu-preview.png',
-    gallery: ['/models/bleu-preview.png', '/models/bleu-2.png', '/models/bleu-3.png', '/models/bleu-4.png', '/models/bleu-5.png', '/models/bleu-6.png', '/models/bleu-7.png', '/models/bleu-8.png', '/models/bleu-9.png', '/models/bleu-10.png'],
+    thumb: asset('models/bleu-preview.png'),
+    heroImg: asset('models/bleu-preview.png'),
+    gallery: ['models/bleu-preview.png', 'models/bleu-2.png', 'models/bleu-3.png', 'models/bleu-4.png', 'models/bleu-5.png', 'models/bleu-6.png', 'models/bleu-7.png', 'models/bleu-8.png', 'models/bleu-9.png', 'models/bleu-10.png'].map(asset),
     liveUrl: 'https://cvdyali-yassin.netlify.app',
-    headerBg: '/models/header-bleu.jpg',
+    headerBg: asset('models/header-bleu.jpg'),
     features: [
       { icon: 'sidebar', title: 'Sidebar profil fixe', desc: 'Photo, titre, localisation, email, téléphone et disponibilité toujours visibles, sur desktop comme sur mobile.' },
       { icon: 'tabs', title: 'Navigation par onglets', desc: 'À propos, Expérience, Formation, Compétences et Contact accessibles en un clic, sans rechargement.' },
@@ -108,11 +115,11 @@ const MODELS: ModelData[] = [
     textColor: '#0a0f1e',
     badgeTextColor: '#ffffff',
     ctaTextColor: '#ffffff',
-    thumb: '/models/rose-preview.png',
-    heroImg: '/models/rose-preview.png',
-    gallery: ['/models/rose-preview.png', '/models/D2H2.PNG', '/models/D2H3.PNG', '/models/D2H4.PNG', '/models/D2H5.PNG', '/models/M2.PNG', '/models/M2H2.PNG', '/models/M2H3.PNG', '/models/M2H4.PNG', '/models/M2H5.PNG'],
+    thumb: asset('models/rose-preview.png'),
+    heroImg: asset('models/rose-preview.png'),
+    gallery: ['models/rose-preview.png', 'models/D2H2.PNG', 'models/D2H3.PNG', 'models/D2H4.PNG', 'models/D2H5.PNG', 'models/M2.PNG', 'models/M2H2.PNG', 'models/M2H3.PNG', 'models/M2H4.PNG', 'models/M2H5.PNG'].map(asset),
     liveUrl: 'https://cvdyali-salma.netlify.app',
-    headerBg: '/models/header-rose.jpg',
+    headerBg: asset('models/header-rose.jpg'),
     features: [
       { icon: 'sidebar', title: 'Sidebar profil fixe', desc: 'Photo, poste, ville, email, téléphone et disponibilité toujours accessibles en un coup d\'œil.' },
       { icon: 'tabs', title: 'Navigation par onglets', desc: 'À propos, Expérience, Formation, Compétences et Contact, organisés clairement.' },
@@ -140,11 +147,11 @@ const MODELS: ModelData[] = [
     textColor: '#0a0f1e',
     badgeTextColor: '#ffffff',
     ctaTextColor: '#ffffff',
-    thumb: '/models/orange-preview.png',
-    heroImg: '/models/orange-preview.png',
-    gallery: ['/models/orange-preview.png', '/models/D3H2.PNG', '/models/D3H3.PNG', '/models/D3H4.PNG', '/models/D3H5.PNG', '/models/M3.PNG', '/models/M3H2.PNG', '/models/M3H3.PNG', '/models/M3H4.PNG', '/models/M3H5.PNG'],
+    thumb: asset('models/orange-preview.png'),
+    heroImg: asset('models/orange-preview.png'),
+    gallery: ['models/orange-preview.png', 'models/D3H2.PNG', 'models/D3H3.PNG', 'models/D3H4.PNG', 'models/D3H5.PNG', 'models/M3.PNG', 'models/M3H2.PNG', 'models/M3H3.PNG', 'models/M3H4.PNG', 'models/M3H5.PNG'].map(asset),
     liveUrl: 'https://cvdyali-imane.netlify.app',
-    headerBg: '/models/header-orange.jpg',
+    headerBg: asset('models/header-orange.jpg'),
     features: [
       { icon: 'sidebar', title: 'Sidebar profil fixe', desc: 'Photo, matière enseignée, ville et disponibilité mis en avant en permanence.' },
       { icon: 'timeline', title: 'Formation en liste chronologique', desc: 'Diplômes et établissements présentés année par année, cliquables pour plus de détails.' },
@@ -172,11 +179,11 @@ const MODELS: ModelData[] = [
     textColor: '#0a0f1e',
     badgeTextColor: '#ffffff',
     ctaTextColor: '#ffffff',
-    thumb: '/models/vert-preview.png',
-    heroImg: '/models/vert-preview.png',
-    gallery: ['/models/vert-preview.png','/models/D4H2.PNG', '/models/D4H3.PNG', '/models/D4H4.PNG', '/models/M4.PNG', '/models/M4H2.PNG', '/models/M4H3.PNG', '/models/M4H4.PNG', '/models/M4H5.PNG'],
+    thumb: asset('models/vert-preview.png'),
+    heroImg: asset('models/vert-preview.png'),
+    gallery: ['models/vert-preview.png', 'models/D4H2.PNG', 'models/D4H3.PNG', 'models/D4H4.PNG', 'models/M4.PNG', 'models/M4H2.PNG', 'models/M4H3.PNG', 'models/M4H4.PNG', 'models/M4H5.PNG'].map(asset),
     liveUrl: 'https://cvdyali-yasine.netlify.app',
-    headerBg: '/models/header-vert.jpg',
+    headerBg: asset('models/header-vert.jpg'),
     features: [
       { icon: 'sidebar', title: 'Sidebar profil fixe', desc: 'Photo, fonction, email et téléphone toujours visibles pendant la navigation.' },
       { icon: 'tabs', title: 'Navigation par onglets', desc: 'À propos, Expérience, Formation, Compétences et Contact organisés en un clic.' },
@@ -737,9 +744,9 @@ function PricingSection({ onSelect }: { onSelect: (plan: string) => void }) {
 // ─── Testimonials ─────────────────────────────────────────────────────────────
 function TestimonialsSection() {
   const t = [
-    { name: 'Yassine El Amrani', role: 'Ingénieur Génie Civil · Casablanca', avatar: 'yas.png', text: 'Mon CV website a impressionné mon recruteur dès le premier entretien. Livré en 48h exactement comme promis.' },
-    { name: 'Salma Bennani', role: 'Infirmière Diplômée d\'État · Casablanca', avatar: 'salma.png', text: 'Le thème Rose correspond parfaitement à mon métier. Service impeccable, je recommande à 100%.' },
-    { name: 'Imane El Fassi', role: 'Enseignante de Mathématiques · Rabat', avatar: 'imane.png', text: 'Professionnel et réactif. Mon CV Orange reflète exactement l\'image que je voulais projeter.' },
+    { name: 'Yassine El Amrani', role: 'Ingénieur Génie Civil · Casablanca', avatar: asset('yas.png'), text: 'Mon CV website a impressionné mon recruteur dès le premier entretien. Livré en 48h exactement comme promis.' },
+    { name: 'Salma Bennani', role: 'Infirmière Diplômée d\'État · Casablanca', avatar: asset('salma.png'), text: 'Le thème Rose correspond parfaitement à mon métier. Service impeccable, je recommande à 100%.' },
+    { name: 'Imane El Fassi', role: 'Enseignante de Mathématiques · Rabat', avatar: asset('imane.png'), text: 'Professionnel et réactif. Mon CV Orange reflète exactement l\'image que je voulais projeter.' },
   ]
   return (
     <section className="py-16 sm:py-24 px-4 sm:px-6 bg-[#f7f8fc]">
