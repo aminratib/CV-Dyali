@@ -381,20 +381,62 @@ function Logo({ light = false, className = '' }: { light?: boolean; className?: 
   )
 }
 
+// ─── Image preloader ──────────────────────────────────────────────────────────
+// Background-image divs don't fire native load events, so there's no built-in
+// way to know when they're actually painted. We preload every src with a real
+// Image() behind the scenes and track which ones finished downloading, so the
+// carousel can show a soft blurred placeholder instead of a slow, partially
+// -rendered image on first paint / slide change.
+function useImagePreload(srcs: string[]) {
+  const [loaded, setLoaded] = useState<Record<string, boolean>>({})
+  useEffect(() => {
+    srcs.forEach((src) => {
+      if (loaded[src]) return
+      const img = new Image()
+      img.onload = () => setLoaded((l) => (l[src] ? l : { ...l, [src]: true }))
+      img.src = src
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [srcs.join('|')])
+  return loaded
+}
+
 // ─── Carousel ─────────────────────────────────────────────────────────────────
 function HeroCarousel() {
   const [cur, setCur] = useState(0)
   const [key, setKey] = useState(0)
+  // Preload every desktop + mobile background up front so switching slides is
+  // instant (already cached) and the very first slide can blur-up smoothly.
+  const loaded = useImagePreload([...CAROUSEL_DESKTOP, ...CAROUSEL_MOBILE])
+
   useEffect(() => {
     const t = setInterval(() => { setCur((c) => (c + 1) % CAROUSEL_DESKTOP.length); setKey((k) => k + 1) }, 5500)
     return () => clearInterval(t)
   }, [])
+
+  const dSrc = CAROUSEL_DESKTOP[cur]
+  const mSrc = CAROUSEL_MOBILE[cur]
+  const dReady = !!loaded[dSrc]
+  const mReady = !!loaded[mSrc]
+
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden bg-[#0a1428]">
       {/* Desktop background */}
-      <div key={`d-${key}`} className="hidden sm:block absolute inset-0 bg-center bg-cover carousel-enter" style={{ backgroundImage: `url(${CAROUSEL_DESKTOP[cur]})` }} />
+      <div
+        key={`d-${key}`}
+        className={`hidden sm:block absolute inset-0 bg-center bg-cover carousel-enter transition-[filter,opacity,transform] duration-700 ease-out ${
+          dReady ? 'blur-none opacity-100 scale-100' : 'blur-2xl opacity-70 scale-110'
+        }`}
+        style={{ backgroundImage: `url(${dSrc})`, willChange: 'filter, transform, opacity' }}
+      />
       {/* Mobile background */}
-      <div key={`m-${key}`} className="sm:hidden absolute inset-0 bg-center bg-cover carousel-enter" style={{ backgroundImage: `url(${CAROUSEL_MOBILE[cur]})` }} />
+      <div
+        key={`m-${key}`}
+        className={`sm:hidden absolute inset-0 bg-center bg-cover carousel-enter transition-[filter,opacity,transform] duration-700 ease-out ${
+          mReady ? 'blur-none opacity-100 scale-100' : 'blur-2xl opacity-70 scale-110'
+        }`}
+        style={{ backgroundImage: `url(${mSrc})`, willChange: 'filter, transform, opacity' }}
+      />
       <div className="absolute inset-0 bg-gradient-to-b from-[#040d1e]/75 via-[#040d1e]/60 to-[#040d1e]/95" />
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
         {CAROUSEL_DESKTOP.map((_, i) => (
